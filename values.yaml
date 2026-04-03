@@ -1,0 +1,16 @@
+cluster:
+  name: ""
+  instances: ""
+  storageSize: ""
+  monitoring: {}
+
+databases: []
+#  - name: ""
+#    owner: ""
+
+users: []
+#  - name: ""
+#    superuser: false
+#    connectionLimit: 20
+#    vaultPath: ""
+#    inRoles: []
