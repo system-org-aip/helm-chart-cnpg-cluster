@@ -1,3 +1,7 @@
+global:
+  vaultSecretPath: ""
+  secretStoreName: ""
+
 cluster:
   name: ""
   instances: ""

@@ -18,15 +18,24 @@ spec:
         inherit: true
         connectionLimit: {{ .connectionLimit | default 20 }}
         passwordSecret:
-          name: psql-{{ .name }}
+          name: pguser-{{ .name }}
         {{- if .inRoles }}
         inRoles:
           {{- toYaml .inRoles | nindent 10 }}
         {{- end }}
       {{- end }}
 
-  # Настройки мониторинга или бэкапов можно вынести сюда
+  # Conditional Bootstrap section
+  {{- if .Values.cluster.bootstrap.enabled }}
   bootstrap:
     initdb:
-      database: app_db
-      owner: dbadmin2048
+      {{- with .Values.cluster.bootstrap.initdb }}
+      database: {{ .database | quote }}
+      owner: {{ .owner | quote }}
+      {{- if .secret }}
+      # Optional: if you want to use a specific secret for the app user
+      secret:
+        name: {{ .secret }}
+      {{- end }}
+      {{- end }}
+  {{- end }}

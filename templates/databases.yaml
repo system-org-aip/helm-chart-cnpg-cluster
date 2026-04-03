@@ -1,4 +1,6 @@
 {{- range .Values.databases }}
+{{- /* Set owner to .owner if defined, otherwise fallback to .name */ -}}
+{{- $dbOwner := .owner | default .name -}}
 apiVersion: postgresql.cnpg.io/v1
 kind: Database
 metadata:
@@ -7,7 +9,7 @@ spec:
   cluster:
     name: {{ $.Values.cluster.name }}
   name: {{ .name }}
-  owner: {{ .owner }}
+  owner: {{ $dbOwner }}
   ensure: present
 ---
 {{- end }}
