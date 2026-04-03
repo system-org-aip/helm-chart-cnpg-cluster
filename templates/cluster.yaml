@@ -12,7 +12,7 @@ spec:
     roles:
       {{- range .Values.users }}
       - name: {{ .name }}
-        ensure: present
+        ensure: {{ .ensure | default "present" }}
         login: true
         superuser: {{ .superuser | default false }}
         inherit: true
