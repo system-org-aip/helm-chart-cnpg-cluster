@@ -7,8 +7,7 @@ cluster:
   instances: ""
   storageSize: ""
   monitoring: {}
-  bootstrap:
-    eanbled: false
+  bootstrap: {}
 
 databases: []
 #  - name: ""
