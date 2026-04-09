@@ -10,6 +10,6 @@ spec:
     name: {{ $.Values.cluster.name }}
   name: {{ .name }}
   owner: {{ $dbOwner }}
-  ensure: present
+  ensure: {{ .ensure | default "present" }}
 ---
 {{- end }}
