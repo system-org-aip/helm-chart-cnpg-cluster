@@ -6,6 +6,9 @@ spec:
   instances: {{ .Values.cluster.instances }}
   
   storage:
+    {{- if .Values.cluster.storageClass }}
+    storageClass: {{ .Values.cluster.storageClass }}
+    {{- end }}
     size: {{ .Values.cluster.storageSize }}
 
   managed:

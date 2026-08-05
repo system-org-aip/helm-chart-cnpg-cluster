@@ -6,6 +6,7 @@ cluster:
   name: ""
   instances: ""
   storageSize: ""
+  # storageClass: "standart"
   monitoring: {}
   bootstrap: {}
 
