@@ -11,6 +11,11 @@ spec:
     {{- end }}
     size: {{ .Values.cluster.storageSize }}
 
+  {{- with .Values.cluster.affinity }}
+  affinity:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+
   managed:
     roles:
       {{- range .Values.users }}
