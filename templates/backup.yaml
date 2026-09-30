@@ -1,0 +1,78 @@
+{{- if .Values.backup.enabled }}
+{{- $b := .Values.backup -}}
+{{- $method := $b.method | default "plugin" -}}
+{{- if not (has $method (list "plugin" "barmanObjectStore")) }}
+{{- fail "backup.method must be one of: plugin, barmanObjectStore" }}
+{{- end }}
+
+{{- /* S3 credentials from Vault (skipped when existingSecret is used) */ -}}
+{{- if not $b.s3Credentials.existingSecret }}
+{{- $storeName := $b.s3Credentials.secretStoreName | default .Values.global.secretStoreName -}}
+{{- $vaultPath := $b.s3Credentials.vaultPath | default (printf "%s/%s-backup" .Values.global.vaultSecretPath .Values.cluster.name) -}}
+{{- $props := $b.s3Credentials.properties }}
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: {{ include "cnpg-cluster.backup.s3SecretName" . }}
+  labels:
+    app.kubernetes.io/managed-by: {{ .Release.Service }}
+spec:
+  refreshInterval: "30s"
+  secretStoreRef:
+    name: {{ $storeName }}
+    kind: ClusterSecretStore
+  target:
+    name: {{ include "cnpg-cluster.backup.s3SecretName" . }}
+  data:
+    - secretKey: ACCESS_KEY_ID
+      remoteRef:
+        key: {{ $vaultPath }}
+        property: {{ $props.accessKeyId }}
+    - secretKey: ACCESS_SECRET_KEY
+      remoteRef:
+        key: {{ $vaultPath }}
+        property: {{ $props.secretAccessKey }}
+    {{- if $props.region }}
+    - secretKey: ACCESS_REGION
+      remoteRef:
+        key: {{ $vaultPath }}
+        property: {{ $props.region }}
+    {{- end }}
+---
+{{- end }}
+
+{{- if eq $method "plugin" }}
+apiVersion: barmancloud.cnpg.io/v1
+kind: ObjectStore
+metadata:
+  name: {{ include "cnpg-cluster.backup.objectStoreName" . }}
+spec:
+  {{- if $b.retentionPolicy }}
+  retentionPolicy: {{ $b.retentionPolicy | quote }}
+  {{- end }}
+  configuration:
+    {{- include "cnpg-cluster.backup.barmanConfiguration" . | nindent 4 }}
+---
+{{- end }}
+
+{{- range $b.scheduledBackups }}
+apiVersion: postgresql.cnpg.io/v1
+kind: ScheduledBackup
+metadata:
+  name: {{ $.Values.cluster.name }}-{{ .name }}
+spec:
+  cluster:
+    name: {{ $.Values.cluster.name }}
+  schedule: {{ .schedule | quote }}
+  immediate: {{ .immediate | default false }}
+  suspend: {{ .suspend | default false }}
+  backupOwnerReference: {{ .backupOwnerReference | default "self" }}
+  target: {{ .target | default "prefer-standby" }}
+  method: {{ $method }}
+  {{- if eq $method "plugin" }}
+  pluginConfiguration:
+    name: barman-cloud.cloudnative-pg.io
+  {{- end }}
+---
+{{- end }}
+{{- end }}

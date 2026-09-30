@@ -16,6 +16,29 @@ spec:
     {{- toYaml . | nindent 4 }}
   {{- end }}
 
+  {{- if .Values.backup.enabled }}
+  {{- if eq (.Values.backup.method | default "plugin") "plugin" }}
+  plugins:
+    - name: barman-cloud.cloudnative-pg.io
+      isWALArchiver: true
+      parameters:
+        barmanObjectName: {{ include "cnpg-cluster.backup.objectStoreName" . }}
+        {{- if .Values.backup.serverName }}
+        serverName: {{ .Values.backup.serverName }}
+        {{- end }}
+  {{- else }}
+  backup:
+    {{- if .Values.backup.retentionPolicy }}
+    retentionPolicy: {{ .Values.backup.retentionPolicy | quote }}
+    {{- end }}
+    barmanObjectStore:
+      {{- include "cnpg-cluster.backup.barmanConfiguration" . | nindent 6 }}
+      {{- if .Values.backup.serverName }}
+      serverName: {{ .Values.backup.serverName }}
+      {{- end }}
+  {{- end }}
+  {{- end }}
+
   managed:
     roles:
       {{- range .Values.users }}

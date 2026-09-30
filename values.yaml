@@ -12,6 +12,63 @@ cluster:
   monitoring: {}
   bootstrap: {}
 
+# Backups to S3-compatible storage via Barman Cloud.
+# Disabled by default: existing releases are rendered exactly as before.
+backup:
+  enabled: false
+  # plugin            - Barman Cloud Plugin (recommended, requires plugin installed in the k8s cluster)
+  # barmanObjectStore - in-tree Cluster.spec.backup (deprecated since CNPG 1.26)
+  method: plugin
+  # e.g. s3://bucket/path. Must NOT contain WAL/backups of another cluster with the same serverName.
+  destinationPath: ""
+  endpointURL: "https://s3.amazonaws.com"
+  # Folder name inside destinationPath, defaults to cluster name.
+  serverName: ""
+  # ObjectStore resource name (plugin method), defaults to <cluster.name>-backup
+  objectStoreName: ""
+  retentionPolicy: "30d"
+  # endpointCA:
+  #   name: s3-ca
+  #   key: ca.crt
+  s3Credentials:
+    # Use an existing Secret with keys ACCESS_KEY_ID / ACCESS_SECRET_KEY [/ ACCESS_REGION].
+    # If empty - ExternalSecret <cluster.name>-backup-s3 is created from Vault.
+    existingSecret: ""
+    # Defaults to <global.vaultSecretPath>/<cluster.name>-backup
+    vaultPath: ""
+    # Defaults to global.secretStoreName
+    secretStoreName: ""
+    # Property names inside the Vault secret
+    properties:
+      accessKeyId: access_key_id
+      secretAccessKey: secret_access_key
+      region: ""
+  # WAL archiving (continuous, every WAL segment ~16MB is uploaded to S3). Required for PITR.
+  wal:
+    # Compression of each WAL file before upload: gzip | bzip2 | snappy (| lz4 | xz | zstd on newer barman).
+    # gzip - good ratio/CPU balance; snappy - faster, less CPU, bigger files; bzip2 - smallest, slowest.
+    # Empty - no compression (not recommended, WAL compresses well).
+    compression: gzip
+    # How many WAL files are uploaded (and restored during recovery) in parallel. Default 1.
+    # Increase (e.g. 4-8) if archiving lags behind under heavy write load
+    # (growing pg_wal, "archive_command failed"/pending WALs in cnpg status).
+    maxParallel: 1
+  # Base backups (full copy of PGDATA made by ScheduledBackup / Backup).
+  data:
+    # Compression of base backup tarballs: gzip | bzip2 | snappy (| lz4 | xz | zstd on newer barman).
+    compression: gzip
+    # Number of parallel upload streams for a base backup. Default 2.
+    # More jobs - faster backup of large databases, but more CPU/network load on the instance.
+    jobs: 2
+  # Cron with seconds field (6 fields)
+  scheduledBackups:
+    - name: daily
+      schedule: "0 0 2 * * *"
+      immediate: false
+      suspend: false
+      backupOwnerReference: self
+      target: prefer-standby
+
 databases: []
 #  - name: ""
 #    owner: ""
