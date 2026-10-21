@@ -16,6 +16,11 @@ spec:
     {{- toYaml . | nindent 4 }}
   {{- end }}
 
+  {{- if and .Values.cluster.monitoring (not (empty .Values.cluster.monitoring)) }}
+  monitoring:
+    {{- toYaml .Values.cluster.monitoring | nindent 4 }}
+  {{- end }}
+
   {{- if .Values.backup.enabled }}
   {{- if eq (.Values.backup.method | default "plugin") "plugin" }}
   plugins:

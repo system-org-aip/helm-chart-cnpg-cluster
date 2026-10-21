@@ -32,3 +32,22 @@ backup:
 - `destinationPath` + `serverName` must be empty: barman refuses to archive WAL into a
   location that already holds WAL of another cluster. Set `backup.serverName` to a new value when reusing a bucket path.
 - A switch between `barmanObjectStore` and `plugin` requires a manual migration, see the plugin docs.
+
+## Monitoring
+
+Disabled by default (`cluster.monitoring.enablePodMonitor: false`).
+
+CloudNativePG includes a built-in Prometheus exporter and can automatically manage a Prometheus Operator `PodMonitor`:
+
+```yaml
+cluster:
+  monitoring:
+    enablePodMonitor: true
+    # disableDefaultQueries: false
+    # customQueriesConfigMap:
+    #   - name: custom-queries-configmap
+    #     key: queries
+    # customQueriesSecret:
+    #   - name: custom-queries-secret
+    #     key: queries
+```
